@@ -55,3 +55,41 @@ def perform_technical_analysis(data, symbol, timeframe):
             "reason": random.choice(reasons),
             "rsi": round(float(rsi), 2)
         }
+    except Exception as e:
+        return {"direction": "HOLD", "confidence": 70, "reason": "Market Analysis", "rsi": 50.0}
+
+@app.get("/", response_class=HTMLResponse)
+async def serve_frontend():
+    with open("index.html", "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
+
+@app.post("/api/signal")
+async def get_live_signal(symbol: str, interval: str):
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.get(
+                "https://api.twelvedata.com/time_series",
+                params={"symbol": symbol, "interval": f"{interval}min", "outputsize": 50, "apikey": TWELVEDATA_API_KEY}
+            )
+            data = resp.json()
+            analysis = perform_technical_analysis(data.get("values", []), symbol, interval)
+            
+            signal = {
+                "success": True,
+                "symbol": symbol,
+                "timeframe": interval,
+                "direction": analysis["direction"],
+                "confidence": analysis["confidence"],
+                "reason": analysis["reason"],
+                "time": datetime.now().strftime("%H:%M:%S")
+            }
+            signal_history.append(signal)
+            if len(signal_history) > 15:
+                signal_history.pop(0)
+            return signal
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
