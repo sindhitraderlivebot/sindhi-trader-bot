@@ -1,1 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SINDHI TRADER BOT - Ultimate Forex Signal Terminal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://s3.tradingview.com/tv.js"></script>
+    <style>
+        body { background: radial-gradient(circle at center, #0f172a 0%, #020617 100%); color: #f8fafc; }
+        .glow-text-green { text-shadow: 0 0 15px rgba(16, 185, 129, 0.6); }
+        #tv-chart-container { min-height: 460px; }
+        @media (min-width: 1024px) { #tv-chart-container { min-height: 680px; } }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(16 185 129 / 0.3); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
 
+    <header class="border-b border-gray-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl font-black tracking-wider text-emerald-500 glow-text-green">SINDHI TRADER BOT</span>
+                <span class="bg-emerald-500/10 text-emerald-400 text-xs px-3 py-1 rounded-full border border-emerald-500/30 font-bold">V5.7 REAL TA</span>
+            </div>
+            <button onclick="showVIPModal()" class="bg-emerald-600 hover:bg-emerald-700 px-6 py-2 rounded-full text-sm font-semibold flex items-center gap-2">
+                <i class="fa-solid fa-crown"></i> VIP ACCESS
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow">
+        <!-- Welcome -->
+        <div class="bg-slate-900/40 p-6 rounded-2xl border border-slate-800 flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold">Welcome back, Trader!</h1>
+                <p class="text-emerald-400">Real Market Analysis • Live Signals</p>
+            </div>
+        </div>
+
+        <!-- Hot Setups -->
+        <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 mb-8">
+            <h2 class="text-lg font-bold text-emerald-400 mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-fire"></i> LIVE HOT SETUPS
+            </h2>
+            <div id="hot-setups-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Controls -->
+            <div class="lg:col-span-5 bg-slate-900/80 p-5 rounded-2xl border border-slate-800">
+                <select id="asset-pair" onchange="onPairChange()" class="w-full mb-4 bg-slate-950 border border-slate-700 rounded-lg px-4 py-3"></select>
+                
+                <div class="grid grid-cols-4 gap-2 mb-6">
+                    <button onclick="setTimeframe('1')" id="tf-1" class="tf-btn bg-emerald-500 text-slate-950 py-3 rounded text-sm">1m</button>
+                    <button onclick="setTimeframe('5')" id="tf-5" class="tf-btn bg-slate-950 py-3 rounded text-sm">5m</button>
+                    <button onclick="setTimeframe('15')" id="tf-15" class="tf-btn bg-slate-950 py-3 rounded text-sm">15m</button>
+                    <button onclick="setTimeframe('30')" id="tf-30" class="tf-btn bg-slate-950 py-3 rounded text-sm">30m</button>
+                </div>
+
+                <button onclick="generateSignal()" id="signal-btn" class="w-full bg-emerald-500 hover:bg-emerald-600 py-5 rounded-2xl font-bold text-xl">GET LIVE SIGNAL</button>
+
+                <div id="signal-result" class="hidden mt-6 p-5 bg-slate-950 rounded-2xl border border-emerald-500/30"></div>
+            </div>
+
+            <!-- TradingView Chart -->
+            <div class="lg:col-span-7 bg-slate-900/80 p-4 rounded-2xl border border-slate-800">
+                <div id="tv-chart-container" class="w-full"></div>
+            </div>
+        </div>
+
+        <!-- Signal History -->
+        <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 mt-8">
+            <h3 class="font-bold mb-4">Signal History + Performance</h3>
+            <div id="signal-history" class="space-y-3 max-h-96 overflow-auto"></div>
+        </div>
+
+        <!-- Reviews -->
+        <div class="mt-12">
+            <h3 class="font-bold mb-6 text-emerald-400 text-center text-xl">What Traders Are Saying</h3>
+            <div id="reviews-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+        </div>
+    </main>
+
+    <!-- VIP Modal -->
+    <div id="vip-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100]">
+        <div class="bg-slate-900 rounded-3xl p-8 max-w-md w-full mx-4 border border-emerald-500/50">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-3"><i class="fa-solid fa-crown text-yellow-400"></i> VIP Subscription</h2>
+            
+            <div class="bg-slate-800 p-6 rounded-2xl mb-6 text-center">
+                <div class="text-5xl font-black text-emerald-400">$50</div>
+                <div class="text-sm text-gray-400">for 6 Months</div>
+            </div>
+
+            <input id="promo-code" type="text" placeholder="Enter Promo Code" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-5 py-4 text-center text-lg mb-4">
+            
+            <button onclick="redeemPromo()" class="w-full bg-emerald-500 hover:bg-emerald-600 py-4 rounded-2xl font-bold text-xl">
+                REDEEM & ACTIVATE VIP
+            </button>
+            
+            <button onclick="window.open('https://wa.me/923133119500', '_blank')" class="w-full mt-4 border border-gray-600 hover:bg-slate-800 py-3 rounded-2xl flex items-center justify-center gap-2">
+                <i class="fa-brands fa-whatsapp text-green-500"></i> WhatsApp Support
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentInterval = '5';
+        let currentSymbol = 'XAUUSD';
+        let signalHistory = [];
+        let isVIP = false;
+
+        const allPairs = [ /* tumhare saare pairs yahan paste kar do */ ];
+
+        function populatePairs() {
+            const select = document.getElementById('asset-pair');
+            allPairs.forEach(pair => {
+                const opt = document.createElement('option');
+                opt.value = pair;
+                opt.textContent = pair;
+                select.appendChild(opt);
+            });
+        }
+
+        async function generateSignal() {
+            const btn = document.getElementById('signal-btn');
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Analyzing Live Market...`;
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/signal', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({symbol: currentSymbol, interval: currentInterval})
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    document.getElementById('signal-result').innerHTML = `
+                        <div class="text-4xl font-bold ${data.direction === 'BUY' ? 'text-emerald-400' : 'text-red-400'} text-center">
+                            ${data.direction} ${data.symbol}
+                        </div>
+                        <div class="mt-4 p-4 bg-slate-900 rounded-xl">
+                            <strong>Analysis:</strong> ${data.reason}<br>
+                            Confidence: <span class="text-emerald-400">${data.confidence}%</span>
+                        </div>
+                    `;
+                    document.getElementById('signal-result').classList.remove('hidden');
+                }
+            } catch(e) {
+                alert("Backend not connected yet");
+            }
+
+            btn.innerHTML = 'GET LIVE SIGNAL';
+            btn.disabled = false;
+        }
+
+        function showVIPModal() {
+            document.getElementById('vip-modal').classList.remove('hidden');
+        }
+
+        async function redeemPromo() {
+            const code = document.getElementById('promo-code').value.trim();
+            const res = await fetch('/api/redeem-promo', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({code})
+            });
+            const data = await res.json();
+            alert(data.message || "Success!");
+        }
+
+        // Initialize
+        window.onload = () => {
+            populatePairs();
+            // TradingView widget code yahan add kar sakte ho
+        };
+    </script>
+</body>
+</html>
