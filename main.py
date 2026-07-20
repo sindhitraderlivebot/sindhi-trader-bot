@@ -63,9 +63,14 @@ async def serve_frontend():
     with open("index.html", "r", encoding="utf-8") as f:
         return HTMLResponse(f.read())
 
+# Fixed Signal Endpoint (Request body के लिए)
 @app.post("/api/signal")
-async def get_live_signal(symbol: str, interval: str):
+async def get_live_signal(request: Request):
     try:
+        data = await request.json()
+        symbol = data.get("symbol", "XAUUSD")
+        interval = data.get("interval", "5")
+        
         async with httpx.AsyncClient(timeout=15.0) as client:
             resp = await client.get(
                 "https://api.twelvedata.com/time_series",
@@ -89,6 +94,31 @@ async def get_live_signal(symbol: str, interval: str):
             return signal
     except Exception as e:
         return {"success": False, "error": str(e)}
+
+# 🔥 Promo Code Route (ये missing था)
+@app.post("/api/redeem-promo")
+async def redeem_promo(request: Request):
+    try:
+        data = await request.json()
+        promo_code = data.get("code", "").strip().upper()
+        
+        # अपना promo code यहाँ add कर सकते हो
+        valid_codes = ["VIP50", "SINDHI2026", "PROMO50", "TESTVIP"]
+        
+        if promo_code in valid_codes:
+            return {
+                "success": True,
+                "message": "🎉 VIP Subscription Activated Successfully for 6 Months!",
+                "status": "active",
+                "expires": "6 months"
+            }
+        else:
+            return {
+                "success": False,
+                "message": "❌ Invalid Promo Code. Try VIP50"
+            }
+    except Exception as e:
+        return {"success": False, "message": "Something went wrong"}
 
 if __name__ == "__main__":
     import uvicorn
