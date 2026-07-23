@@ -93,28 +93,78 @@
                 showVIPModal();
                 return;
             }
-            // ... (call /api/signal as before)
+            const btn = document.getElementById('signal-btn');
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Analyzing Market...`;
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/signal', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({symbol: currentSymbol, interval: currentInterval})
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    const resultDiv = document.getElementById('signal-result');
+                    resultDiv.className = `p-8 rounded-3xl border-2 ${data.direction === 'BUY' ? 'border-emerald-500 signal-buy' : 'border-red-500 signal-sell'}`;
+                    resultDiv.innerHTML = `
+                        <div class="text-5xl font-black mb-4 ${data.direction === 'BUY' ? 'text-emerald-400' : 'text-red-400'}">
+                            ${data.direction} ${data.symbol}
+                        </div>
+                        <div class="text-xl">Confidence: ${data.confidence}%</div>
+                        <div class="text-lg mt-2">${data.reason}</div>
+                    `;
+                    resultDiv.classList.remove('hidden');
+
+                    signalHistory.unshift(data);
+                    updateHistory();
+                }
+            } catch(e) {
+                alert("Error generating signal");
+            }
+
+            btn.innerHTML = `<i class="fa-solid fa-bolt"></i> GET LIVE SIGNAL`;
+            btn.disabled = false;
         }
 
-        async function redeemPromo() {
-            const code = document.getElementById('promo-code').value.trim().toUpperCase();
-            const res = await fetch('/api/redeem-promo', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({code})
-            });
-            const data = await res.json();
-            if (data.success) {
-                isVIP = true;
-                alert(data.message);
-                document.getElementById('vip-modal').classList.add('hidden');
-            } else {
-                alert(data.message);
-            }
+        function updateHistory() {
+            const container = document.getElementById('signal-history');
+            container.innerHTML = signalHistory.map(s => `
+                <div class="flex justify-between bg-slate-950 p-4 rounded-2xl">
+                    <div>${s.symbol} - ${s.direction}</div>
+                    <div class="text-emerald-400">${s.confidence}%</div>
+                </div>
+            `).join('');
+        }
+
+        function setTimeframe(tf) {
+            currentInterval = tf;
         }
 
         function showVIPModal() {
             document.getElementById('vip-modal').classList.remove('hidden');
+        }
+
+        async function redeemPromo() {
+            const code = document.getElementById('promo-code').value.trim().toUpperCase();
+            try {
+                const res = await fetch('/api/redeem-promo', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({code})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    isVIP = true;
+                    alert(data.message || "VIP Activated Successfully!");
+                    document.getElementById('vip-modal').classList.add('hidden');
+                } else {
+                    alert(data.message || "Invalid Promo Code");
+                }
+            } catch(e) {
+                alert("Connection error. Check server logs.");
+            }
         }
 
         window.onload = () => {
