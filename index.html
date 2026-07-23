@@ -6,7 +6,6 @@
     <title>SINDHI TRADER BOT - Live Forex Signals</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <script src="https://s3.tradingview.com/tv.js"></script>
     <style>
         body { background: radial-gradient(circle at center, #0f172a 0%, #020617 100%); color: #f8fafc; }
         .glow-text { text-shadow: 0 0 25px #10b981, 0 0 50px #10b981; }
@@ -14,7 +13,6 @@
         .signal-sell { animation: pulseSell 2s infinite; }
         @keyframes pulseBuy { 0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.8); } 70% { box-shadow: 0 0 0 25px rgba(16,185,129,0); } }
         @keyframes pulseSell { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.8); } 70% { box-shadow: 0 0 0 25px rgba(239,68,68,0); } }
-        .review-card { animation: slide 15s linear infinite; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -23,9 +21,7 @@
             <div class="flex items-center gap-4">
                 <span class="text-4xl font-black tracking-tighter glow-text text-emerald-400">SINDHI TRADER BOT</span>
             </div>
-            <button onclick="showVIPModal()" class="bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-3 rounded-2xl font-bold flex items-center gap-2 hover:scale-105 transition">
-                <i class="fa-solid fa-crown"></i> VIP ACCESS
-            </button>
+            <button onclick="showVIPModal()" class="bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-3 rounded-2xl font-bold flex items-center gap-2 hover:scale-105 transition-all">VIP ACCESS</button>
         </div>
     </header>
 
@@ -39,10 +35,10 @@
                 <select id="asset-pair" class="w-full mb-6 bg-slate-950 border border-slate-700 rounded-2xl px-5 py-4 text-lg"></select>
                 
                 <div class="grid grid-cols-4 gap-3 mb-8">
-                    <button onclick="setTimeframe('1')" class="tf-btn py-4 rounded-2xl">1m</button>
-                    <button onclick="setTimeframe('5')" class="tf-btn py-4 rounded-2xl bg-emerald-500 text-black">5m</button>
-                    <button onclick="setTimeframe('15')" class="tf-btn py-4 rounded-2xl">15m</button>
-                    <button onclick="setTimeframe('30')" class="tf-btn py-4 rounded-2xl">30m</button>
+                    <button onclick="setTimeframe('1')" class="tf-btn py-4 rounded-2xl text-sm">1m</button>
+                    <button onclick="setTimeframe('5')" class="tf-btn py-4 rounded-2xl text-sm bg-emerald-500 text-black">5m</button>
+                    <button onclick="setTimeframe('15')" class="tf-btn py-4 rounded-2xl text-sm">15m</button>
+                    <button onclick="setTimeframe('30')" class="tf-btn py-4 rounded-2xl text-sm">30m</button>
                 </div>
 
                 <button onclick="generateSignal()" id="signal-btn" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 py-7 rounded-3xl font-bold text-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all">
@@ -58,33 +54,28 @@
             </div>
         </div>
 
-        <!-- Reviews -->
-        <div class="mt-12">
-            <h3 class="text-2xl font-bold mb-6 text-center">What Our Traders Say</h3>
-            <div id="reviews-container" class="flex gap-6 overflow-x-auto pb-6"></div>
+        <!-- Signal History -->
+        <div class="mt-12 bg-slate-900/80 p-6 rounded-3xl border border-emerald-500/20">
+            <h3 class="font-bold mb-4">Signal History</h3>
+            <div id="signal-history" class="space-y-3 max-h-96 overflow-auto"></div>
         </div>
-
-        <!-- News -->
-        <div id="news-box" class="mt-10 bg-slate-900/80 p-6 rounded-3xl border border-yellow-500/30 text-center"></div>
     </main>
 
     <!-- VIP Modal -->
-    <div id="vip-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-[100]">
+    <div id="vip-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
         <div class="bg-slate-900 rounded-3xl p-10 max-w-md w-full mx-4 border border-emerald-500">
-            <h2 class="text-3xl font-bold mb-6 text-center">VIP Subscription</h2>
-            <div class="bg-slate-800 p-6 rounded-2xl mb-6 text-center">
-                <div class="text-5xl font-black text-emerald-400">$50</div>
-                <div class="text-sm text-gray-400">for 6 Months</div>
-            </div>
-            <input id="promo-code" type="text" placeholder="Enter Promo Code (e.g. VIP0001)" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-5 py-4 text-center mb-4">
+            <h2 class="text-3xl font-bold mb-6 text-center">VIP Subscription - $50 / 6 Months</h2>
+            <input id="promo-code" type="text" placeholder="Enter Promo Code (VIP0001 or SINDHIMASTER2026)" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-5 py-4 mb-6 text-center">
             <button onclick="redeemPromo()" class="w-full bg-emerald-500 py-4 rounded-2xl font-bold text-xl mb-4">REDEEM & ACTIVATE</button>
-            <a href="https://wa.me/923133119500" target="_blank" class="block text-center text-emerald-400 hover:text-emerald-500">💬 WhatsApp Support: +92 313 3119500</a>
+            <a href="https://wa.me/923133119500" target="_blank" class="block text-center text-emerald-400 hover:text-emerald-500">💬 WhatsApp Support</a>
         </div>
     </div>
 
     <script>
+        let isVIP = false;
         let currentSymbol = "XAUUSD";
         let currentInterval = "5";
+        let signalHistory = [];
 
         const allPairs = ["XAUUSD","EURUSD","GBPUSD","USDJPY","AUDUSD","USDCAD","USDCHF","NZDUSD","EURJPY","GBPJPY","EURGBP","EURCHF","AUDJPY","CADJPY","USDMXN","USDTRY","EURAUD","GBPAUD","EURCAD","GBPCAD","AUDCAD","NZDJPY","USDZAR","USDSGD","USDHKD","USDKRW","EURPLN","AUDNZD","EURTRY","GBPCHF","CADCHF","NZDCHF","USDINR","USDCNH","EURCZK","USDBRL","USDCLP","USDPHP","USDTHB","USDTWD","GBPNZD","AUDCHF","NZDCAD","EURHUF","USDIDR","USDMYR","USDCOP","USDPEN"];
 
@@ -98,7 +89,65 @@
             });
         }
 
-        async function generateSignal() { /* previous logic */ }
+        async function generateSignal() {
+            if (!isVIP) {
+                alert("Please activate VIP first!");
+                showVIPModal();
+                return;
+            }
+            const btn = document.getElementById('signal-btn');
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Analyzing...`;
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/signal', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({symbol: currentSymbol, interval: currentInterval})
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    const resultDiv = document.getElementById('signal-result');
+                    resultDiv.className = `p-8 rounded-3xl border-2 ${data.direction === 'BUY' ? 'border-emerald-500 signal-buy' : 'border-red-500 signal-sell'}`;
+                    resultDiv.innerHTML = `
+                        <div class="text-5xl font-black mb-4 ${data.direction === 'BUY' ? 'text-emerald-400' : 'text-red-400'}">
+                            ${data.direction} ${data.symbol}
+                        </div>
+                        <div class="text-xl">Confidence: ${data.confidence}%</div>
+                        <div class="text-lg mt-2">${data.reason}</div>
+                    `;
+                    resultDiv.classList.remove('hidden');
+
+                    // Add to history
+                    signalHistory.unshift(data);
+                    updateHistory();
+                }
+            } catch(e) {
+                alert("Error generating signal");
+            }
+
+            btn.innerHTML = `<i class="fa-solid fa-bolt"></i> GET LIVE SIGNAL`;
+            btn.disabled = false;
+        }
+
+        function updateHistory() {
+            const container = document.getElementById('signal-history');
+            container.innerHTML = signalHistory.map(s => `
+                <div class="flex justify-between bg-slate-950 p-4 rounded-2xl">
+                    <div>${s.symbol} ${s.direction}</div>
+                    <div class="text-emerald-400">${s.confidence}%</div>
+                </div>
+            `).join('');
+        }
+
+        function setTimeframe(tf) {
+            currentInterval = tf;
+        }
+
+        function showVIPModal() {
+            document.getElementById('vip-modal').classList.remove('hidden');
+        }
 
         async function redeemPromo() {
             const code = document.getElementById('promo-code').value.trim().toUpperCase();
@@ -108,17 +157,18 @@
                 body: JSON.stringify({code})
             });
             const data = await res.json();
-            alert(data.message);
+            if (data.success) {
+                isVIP = true;
+                alert(data.message);
+                document.getElementById('vip-modal').classList.add('hidden');
+            } else {
+                alert(data.message);
+            }
         }
 
-        function showVIPModal() {
-            document.getElementById('vip-modal').classList.remove('hidden');
-        }
-
-        // Load reviews, hot setups, news on load
         window.onload = () => {
             populatePairs();
-            // fetch reviews, hot setups, news via API and display
+            // Add more initial calls if needed
         };
     </script>
 </body>
