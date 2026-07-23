@@ -8,6 +8,7 @@ import numpy as np
 from datetime import datetime
 import os
 import random
+import json
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -29,6 +30,35 @@ signal_history = []
 
 all_pairs = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "AUDUSD", "USDCAD", "USDCHF", "NZDUSD", "EURJPY", "GBPJPY", "EURGBP", "EURCHF", "AUDJPY", "CADJPY", "USDMXN", "USDTRY", "EURAUD", "GBPAUD", "EURCAD", "GBPCAD", "AUDCAD", "NZDJPY", "USDZAR", "USDSGD", "USDHKD", "USDKRW", "EURPLN", "AUDNZD", "EURTRY", "GBPCHF", "CADCHF", "NZDCHF", "USDINR", "USDCNH", "EURCZK", "USDBRL", "USDCLP", "USDPHP", "USDTHB", "USDTWD", "GBPNZD", "AUDCHF", "NZDCAD", "EURHUF", "USDIDR", "USDMYR", "USDCOP", "USDPEN", "EURSEK", "USDRUB", "USDZAR", "TRYJPY", "EURHUF"]
 
+# ==================== PROMO CODES SYSTEM (1 to 1000 + MASTER) ====================
+MASTER_CODE = "SINDHIVIPMASTER"  # Infinite use lifetime code for you
+USED_CODES_FILE = "used_codes.json"
+
+# Generate 1 to 1000 series promo codes in memory
+# Codes: SINDHI-PROMO-1, SINDHI-PROMO-2 ... SINDHI-PROMO-1000
+ONE_TIME_PROMO_CODES = {f"SINDHI-PROMO-{i}" for i in range(1, 1001)}
+
+def load_used_codes():
+    """Load previously burned codes from file to maintain state across restarts."""
+    if os.path.exists(USED_CODES_FILE):
+        try:
+            with open(USED_CODES_FILE, "r") as f:
+                return set(json.load(f))
+        except Exception:
+            return set()
+    return set()
+
+def mark_code_as_used(code):
+    """Burn out a promo code permanently."""
+    used_codes = load_used_codes()
+    used_codes.add(code)
+    try:
+        with open(USED_CODES_FILE, "w") as f:
+            json.dump(list(used_codes), f)
+    except Exception as e:
+        print(f"Error saving burned code: {e}")
+
+# ==================== ADVANCED SMC & PRICE ACTION ENGINE ====================
 def get_real_analysis(data, symbol, timeframe):
     """
     Advanced 1-Minute Scalping Engine:
@@ -44,7 +74,6 @@ def get_real_analysis(data, symbol, timeframe):
             closes = df['close'].values
             current_price = closes[-1]
 
-        # Advanced Price Action & SMC Confluence Triggers for 1m
         bullish_smc_triggers = [
             "Bullish Order Block (OB) Tap + RSI Oversold Confluence (1m)",
             "Change of Character (CHoCH) + Bullish Engulfing Candle (1m)",
@@ -63,26 +92,22 @@ def get_real_analysis(data, symbol, timeframe):
             "Fair Value Gap (FVG) Rejection + Bearish Momentum Spike (1m)"
         ]
 
-        # Decision Logic based on SMC & Price Action Confluence
-        direction = random.choice(["BUY (CALL)", "SELL (PUT)"])
+        direction = random.choice(["BUY", "SELL"])
         confidence = random.randint(88, 97)
 
-        if "BUY" in direction:
+        if direction == "BUY":
             reason = random.choice(bullish_smc_triggers)
-            dir_label = "BUY"
         else:
             reason = random.choice(bearish_smc_triggers)
-            dir_label = "SELL"
 
         return {
-            "direction": dir_label,
+            "direction": direction,
             "confidence": confidence,
             "reason": reason,
             "rsi": round(random.uniform(28.0, 72.0), 1),
             "price": current_price
         }
     except Exception:
-        # High-accuracy Fallback for 1-minute execution
         direction = random.choice(["BUY", "SELL"])
         return {
             "direction": direction,
@@ -92,6 +117,7 @@ def get_real_analysis(data, symbol, timeframe):
             "price": 0
         }
 
+# ==================== ENDPOINTS ====================
 @app.get("/", response_class=HTMLResponse)
 async def serve_frontend():
     if os.path.exists("index.html"):
@@ -125,23 +151,53 @@ async def redeem_promo(request: Request):
     try:
         body = await request.json()
         code = body.get("promo_code", "").strip().upper()
-        
-        valid_promos = ["SINDHIVIP", "MASTER", "PROMO50", "VIPACCESS"]
-        
-        if code in valid_promos:
-            return {
-                "success": True,
-                "status": "success",
-                "message": "Promo code activated successfully! VIP Unlocked.",
-                "vip_active": True
-            }
-        else:
+
+        if not code:
             return {
                 "success": False,
                 "status": "error",
-                "message": "Invalid Promo Code! Please try again.",
+                "message": "Please enter a valid promo code.",
                 "vip_active": False
             }
+
+        # 1. Check Lifetime Master Code
+        if code == MASTER_CODE:
+            return {
+                "success": True,
+                "status": "success",
+                "message": "Master VIP Access Unlocked! (Lifetime Access)",
+                "vip_active": True
+            }
+
+        # 2. Check One-Time Series Codes (1 to 1000)
+        if code in ONE_TIME_PROMO_CODES:
+            used_codes = load_used_codes()
+            
+            if code in used_codes:
+                return {
+                    "success": False,
+                    "status": "error",
+                    "message": "This Promo Code has already been used and burned out!",
+                    "vip_active": False
+                }
+            
+            # Burn out the code permanently
+            mark_code_as_used(code)
+            return {
+                "success": True,
+                "status": "success",
+                "message": "Promo Code Activated Successfully! (One-time Access)",
+                "vip_active": True
+            }
+
+        # 3. Invalid Code
+        return {
+            "success": False,
+            "status": "error",
+            "message": "Invalid Promo Code! Please check and try again.",
+            "vip_active": False
+        }
+
     except Exception as e:
         return {
             "success": False,
