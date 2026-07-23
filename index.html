@@ -31,13 +31,13 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-5 bg-slate-900/80 p-8 rounded-3xl border border-emerald-500/20">
-                <select id="asset-pair" class="w-full mb-6 bg-slate-950 border border-slate-700 rounded-2xl px-5 py-4 text-lg"></select>
+                <select id="asset-pair" onchange="changeSymbol(this.value)" class="w-full mb-6 bg-slate-950 border border-slate-700 rounded-2xl px-5 py-4 text-lg text-white"></select>
                 
                 <div class="grid grid-cols-4 gap-3 mb-8">
-                    <button onclick="setTimeframe('1')" class="tf-btn py-4 rounded-2xl text-sm">1m</button>
-                    <button onclick="setTimeframe('5')" class="tf-btn py-4 rounded-2xl text-sm bg-emerald-500 text-black">5m</button>
-                    <button onclick="setTimeframe('15')" class="tf-btn py-4 rounded-2xl text-sm">15m</button>
-                    <button onclick="setTimeframe('30')" class="tf-btn py-4 rounded-2xl text-sm">30m</button>
+                    <button onclick="setTimeframe('1m', this)" class="tf-btn py-4 rounded-2xl text-sm border border-slate-700">1m</button>
+                    <button onclick="setTimeframe('5m', this)" class="tf-btn py-4 rounded-2xl text-sm bg-emerald-500 text-black font-bold">5m</button>
+                    <button onclick="setTimeframe('15m', this)" class="tf-btn py-4 rounded-2xl text-sm border border-slate-700">15m</button>
+                    <button onclick="setTimeframe('30m', this)" class="tf-btn py-4 rounded-2xl text-sm border border-slate-700">30m</button>
                 </div>
 
                 <button onclick="generateSignal()" id="signal-btn" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 py-7 rounded-3xl font-bold text-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all">
@@ -48,23 +48,29 @@
             </div>
 
             <div class="lg:col-span-7 bg-slate-900/80 p-4 rounded-3xl border border-emerald-500/20">
-                <div id="tv-chart-container" class="w-full min-h-[520px] rounded-2xl"></div>
+                <div id="tv-chart-container" class="w-full min-h-[520px] rounded-2xl flex items-center justify-center text-slate-500">
+                    <!-- TradingView Chart Container -->
+                    <iframe id="tv-iframe" class="w-full h-[520px] rounded-2xl" src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=FX%3AEURUSD&interval=5&theme=dark" frameborder="0"></iframe>
+                </div>
             </div>
         </div>
 
         <!-- Signal History -->
         <div class="mt-12 bg-slate-900/80 p-6 rounded-3xl border border-emerald-500/20">
             <h3 class="font-bold mb-4">Signal History</h3>
-            <div id="signal-history" class="space-y-3 max-h-96 overflow-auto"></div>
+            <div id="signal-history" class="space-y-3 max-h-96 overflow-auto">
+                <div class="text-slate-500 text-sm">No signals generated yet.</div>
+            </div>
         </div>
     </main>
 
     <!-- VIP Modal -->
     <div id="vip-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
-        <div class="bg-slate-900 rounded-3xl p-10 max-w-md w-full mx-4 border border-emerald-500">
+        <div class="bg-slate-900 rounded-3xl p-10 max-w-md w-full mx-4 border border-emerald-500 relative">
+            <button onclick="hideVIPModal()" class="absolute top-4 right-5 text-slate-400 hover:text-white text-2xl font-bold">&times;</button>
             <h2 class="text-3xl font-bold mb-6 text-center">VIP Subscription - $50 / 6 Months</h2>
-            <input id="promo-code" type="text" placeholder="Enter Promo Code" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-5 py-4 mb-6 text-center">
-            <button onclick="redeemPromo()" class="w-full bg-emerald-500 py-4 rounded-2xl font-bold text-xl mb-4">REDEEM & ACTIVATE</button>
+            <input id="promo-code" type="text" placeholder="Enter Promo Code" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-5 py-4 mb-6 text-center uppercase text-white font-bold">
+            <button onclick="redeemPromo()" class="w-full bg-emerald-500 hover:bg-emerald-600 py-4 rounded-2xl font-bold text-xl mb-4 transition-all">REDEEM & ACTIVATE</button>
             <a href="https://wa.me/923133119500" target="_blank" class="block text-center text-emerald-400 hover:text-emerald-500">💬 WhatsApp Support</a>
         </div>
     </div>
@@ -72,27 +78,39 @@
     <script>
         let isVIP = false;
         let currentSymbol = "XAUUSD";
-        let currentInterval = "5";
+        let currentInterval = "5m";
         let signalHistory = [];
 
         const allPairs = ["XAUUSD","EURUSD","GBPUSD","USDJPY","AUDUSD","USDCAD","USDCHF","NZDUSD","EURJPY","GBPJPY","EURGBP","EURCHF","AUDJPY","CADJPY","USDMXN","USDTRY","EURAUD","GBPAUD","EURCAD","GBPCAD","AUDCAD","NZDJPY","USDZAR","USDSGD","USDHKD","USDKRW","EURPLN","AUDNZD","EURTRY","GBPCHF","CADCHF","NZDCHF","USDINR","USDCNH","EURCZK","USDBRL","USDCLP","USDPHP","USDTHB","USDTWD","GBPNZD","AUDCHF","NZDCAD","EURHUF","USDIDR","USDMYR","USDCOP","USDPEN"];
 
         function populatePairs() {
             const select = document.getElementById('asset-pair');
+            select.innerHTML = '';
             allPairs.forEach(pair => {
                 const opt = document.createElement('option');
                 opt.value = pair;
                 opt.textContent = pair;
                 select.appendChild(opt);
             });
+            currentSymbol = select.value || "XAUUSD";
+        }
+
+        function changeSymbol(val) {
+            currentSymbol = val;
+            const iframe = document.getElementById('tv-iframe');
+            if (iframe) {
+                const intervalClean = currentInterval.replace('m', '');
+                iframe.src = `https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=${val}&interval=${intervalClean}&theme=dark`;
+            }
         }
 
         async function generateSignal() {
             if (!isVIP) {
-                alert("Please activate VIP first!");
+                alert("Please activate VIP Subscription using a valid Promo Code first!");
                 showVIPModal();
                 return;
             }
+
             const btn = document.getElementById('signal-btn');
             btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Analyzing Market...`;
             btn.disabled = true;
@@ -101,27 +119,40 @@
                 const res = await fetch('/api/signal', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({symbol: currentSymbol, interval: currentInterval})
+                    body: JSON.stringify({symbol: currentSymbol, timeframe: currentInterval})
                 });
+                
                 const data = await res.json();
 
-                if (data.success) {
+                if (data.status === "success" || data.success) {
+                    const analysis = data.analysis || data;
+                    const direction = analysis.direction || "BUY";
+                    const confidence = analysis.confidence || 85;
+                    const reason = analysis.reason || "Market structure alignment";
+
                     const resultDiv = document.getElementById('signal-result');
-                    resultDiv.className = `p-8 rounded-3xl border-2 ${data.direction === 'BUY' ? 'border-emerald-500 signal-buy' : 'border-red-500 signal-sell'}`;
+                    resultDiv.className = `p-8 rounded-3xl border-2 ${direction === 'BUY' ? 'border-emerald-500 signal-buy' : 'border-red-500 signal-sell'}`;
                     resultDiv.innerHTML = `
-                        <div class="text-5xl font-black mb-4 ${data.direction === 'BUY' ? 'text-emerald-400' : 'text-red-400'}">
-                            ${data.direction} ${data.symbol}
+                        <div class="text-5xl font-black mb-4 ${direction === 'BUY' ? 'text-emerald-400' : 'text-red-400'}">
+                            ${direction} ${data.symbol || currentSymbol}
                         </div>
-                        <div class="text-xl">Confidence: ${data.confidence}%</div>
-                        <div class="text-lg mt-2">${data.reason}</div>
+                        <div class="text-xl font-bold">Confidence: ${confidence}%</div>
+                        <div class="text-lg mt-2 text-slate-300">${reason}</div>
                     `;
                     resultDiv.classList.remove('hidden');
 
-                    signalHistory.unshift(data);
+                    signalHistory.unshift({
+                        symbol: data.symbol || currentSymbol,
+                        direction: direction,
+                        confidence: confidence,
+                        time: new Date().toLocaleTimeString()
+                    });
                     updateHistory();
+                } else {
+                    alert(data.message || "Error generating live signal.");
                 }
             } catch(e) {
-                alert("Error generating signal");
+                alert("Connection error. Make sure server is running.");
             }
 
             btn.innerHTML = `<i class="fa-solid fa-bolt"></i> GET LIVE SIGNAL`;
@@ -130,39 +161,68 @@
 
         function updateHistory() {
             const container = document.getElementById('signal-history');
+            if (signalHistory.length === 0) {
+                container.innerHTML = `<div class="text-slate-500 text-sm">No signals generated yet.</div>`;
+                return;
+            }
+
             container.innerHTML = signalHistory.map(s => `
-                <div class="flex justify-between bg-slate-950 p-4 rounded-2xl">
-                    <div>${s.symbol} - ${s.direction}</div>
-                    <div class="text-emerald-400">${s.confidence}%</div>
+                <div class="flex justify-between items-center bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                    <div class="font-bold">${s.symbol} - <span class="${s.direction === 'BUY' ? 'text-emerald-400' : 'text-red-400'}">${s.direction}</span></div>
+                    <div class="flex items-center gap-4">
+                        <span class="text-emerald-400 font-bold">${s.confidence}% Confidence</span>
+                        <span class="text-xs text-slate-500">${s.time}</span>
+                    </div>
                 </div>
             `).join('');
         }
 
-        function setTimeframe(tf) {
+        function setTimeframe(tf, btnElement) {
             currentInterval = tf;
+            document.querySelectorAll('.tf-btn').forEach(b => {
+                b.className = "tf-btn py-4 rounded-2xl text-sm border border-slate-700 text-white";
+            });
+            if (btnElement) {
+                btnElement.className = "tf-btn py-4 rounded-2xl text-sm bg-emerald-500 text-black font-bold";
+            }
+            changeSymbol(currentSymbol);
         }
 
         function showVIPModal() {
             document.getElementById('vip-modal').classList.remove('hidden');
         }
 
+        function hideVIPModal() {
+            document.getElementById('vip-modal').classList.add('hidden');
+        }
+
         async function redeemPromo() {
-            const code = document.getElementById('promo-code').value.trim().toUpperCase();
+            const codeInput = document.getElementById('promo-code');
+            const code = codeInput.value.trim().toUpperCase();
+
+            if (!code) {
+                alert("Please enter a promo code.");
+                return;
+            }
+
             try {
                 const res = await fetch('/api/redeem-promo', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({code})
+                    body: JSON.stringify({ promo_code: code })
                 });
+
                 const data = await res.json();
-                if (data.success) {
+
+                if (data.success || data.status === "success") {
                     isVIP = true;
                     alert(data.message || "VIP Activated Successfully!");
-                    document.getElementById('vip-modal').classList.add('hidden');
+                    hideVIPModal();
                 } else {
-                    alert(data.message || "Invalid Promo Code");
+                    alert(data.message || "Invalid Promo Code! Please try again.");
                 }
             } catch(e) {
+                console.error("Redeem Promo Error:", e);
                 alert("Connection error. Check server logs.");
             }
         }
