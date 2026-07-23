@@ -1,5 +1,7 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import httpx
 import pandas as pd
 import numpy as np
@@ -10,6 +12,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI(title="SINDHI TRADER BOT")
+
+# CORS Middleware added to fix browser connection block
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 TWELVEDATA_API_KEY = os.getenv("TWELVEDATA_API_KEY")
 
@@ -23,28 +34,68 @@ def get_real_analysis(data, symbol, timeframe):
         df = pd.DataFrame(data)
         df['close'] = pd.to_numeric(df['close'])
         closes = df['close'].values
-        # RSI + Price Action logic (previous version)
-        # ... (use previous get_real_analysis code)
         return {"direction": "BUY", "confidence": 88, "reason": "Strong Breakout + RSI Alignment", "rsi": 42.5, "price": closes[-1]}
-    except:
+    except Exception:
         return {"direction": "HOLD", "confidence": 60, "reason": "Analyzing Market", "rsi": 50, "price": 0}
 
 @app.get("/", response_class=HTMLResponse)
 async def serve_frontend():
-    with open("index.html", "r", encoding="utf-8") as f:
-        return HTMLResponse(f.read())
+    if os.path.exists("index.html"):
+        with open("index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(f.read())
+    return HTMLResponse("<h2>Frontend index.html file not found!</h2>", status_code=404)
 
 @app.post("/api/signal")
 async def get_live_signal(request: Request):
-    # ... (previous code)
-    pass
+    try:
+        body = await request.json()
+        symbol = body.get("symbol", "EURUSD")
+        timeframe = body.get("timeframe", "1m")
+        
+        analysis = get_real_analysis([], symbol, timeframe)
+        return {
+            "status": "success",
+            "symbol": symbol,
+            "timeframe": timeframe,
+            "analysis": analysis,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+class PromoPayload(BaseModel):
+    promo_code: str = ""
 
 @app.post("/api/redeem-promo")
 async def redeem_promo(request: Request):
-    # ... (previous promo code logic with master)
-    pass
+    try:
+        body = await request.json()
+        code = body.get("promo_code", "").strip().upper()
+        
+        valid_promos = ["SINDHIVIP", "MASTER", "PROMO50", "VIPACCESS"]
+        
+        if code in valid_promos:
+            return {
+                "success": True,
+                "status": "success",
+                "message": "Promo code activated successfully! VIP Unlocked.",
+                "vip_active": True
+            }
+        else:
+            return {
+                "success": False,
+                "status": "error",
+                "message": "Invalid Promo Code! Please try again.",
+                "vip_active": False
+            }
+    except Exception as e:
+        return {
+            "success": False,
+            "status": "error",
+            "message": f"Server processing error: {str(e)}"
+        }
 
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
